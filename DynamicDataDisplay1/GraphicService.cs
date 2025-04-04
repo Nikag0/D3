@@ -18,16 +18,17 @@ using DynamicDataDisplay.Markers.DataSources;
 using Microsoft.Research.DynamicDataDisplay.Filters;
 using System.Reflection;
 using System.Security.Policy;
+using static System.Net.WebRequestMethods;
+using System.Net.NetworkInformation;
 
 namespace DynamicDataDisplay1
 {
     public class GraphicService
     {
-        private int numberOfFiles = 1056;
         private List<double[]> listAllPointAmpl = new List<double[]>();
-        int maxLengthPointOfA = 0;
-        //Лист indexOfArray используется для первой версии метода FindInfexOfArray.
-        //private readonly List<double> indexOfArray = new List<double>();
+        private int maxLengthPointOfA = 0;
+        public string[] NumberOdFiles { get; private set; }
+        private double k = 0.0;
 
         public List<double[]> ListAllPointAmpl { get { return listAllPointAmpl; } private set { listAllPointAmpl = value; } }
         public double[] MassAllPointTime { get; private set; }
@@ -35,9 +36,12 @@ namespace DynamicDataDisplay1
         //Заполнение массива значениями по оси Амплитуд.
         public void AmplitudeData(string pathFolder, string nameFile)
         {
-            for (int i = 0; i < numberOfFiles; i++)
+            NumberOdFiles = Directory.GetFiles(pathFolder);
+            k = 360.0 / (double)NumberOdFiles.Length;
+
+            for (int i = 0; i < NumberOdFiles.Length - 1; i++)
             {
-                string[] MassPointAStr = File.ReadAllLines($@"{pathFolder}\{i}{nameFile}");
+                string[] MassPointAStr = System.IO.File.ReadAllLines($@"{pathFolder}\{i}{nameFile}");
                 double[] MassPointADouble = new double[MassPointAStr.Length];
 
                 for (int j = 0; j < MassPointAStr.Length; j++)
@@ -70,10 +74,10 @@ namespace DynamicDataDisplay1
 
         //Вторая версия метода FindInfexOfArray.
         //Возвращает лист индексов массивов, где значение элементов массива больше или равно strob и кол-во элементов больше numArraySequence.
-        public List<double> FindIndexOfArray(List<double[]> arraysList, double strob, int numArraySequence)
+        public List<int> FindIndexOfArray(List<double[]> arraysList, double strob, int numArraySequence)
         {
             int num = 0;
-            List<double> indexOfArray = new List<double>();
+            List<int> indexOfArray = new List<int>();
 
             for (int i = 0; i < arraysList.Count; i++)
             {
@@ -95,50 +99,38 @@ namespace DynamicDataDisplay1
             return indexOfArray;
         }
 
-        //Первая версия метода FindInfexOfArray.
-        //Записывает индексы массивов, подходящие под условия.
-        /*public void FindInfexOfArray(double strob, int numArraySequence)
-        {
-            int num = 0;
-
-            for (int i = 0; i < listAllPointAmpl.Count; i++)
-            {
-                for (int j = 630; j < 840; j++)
-                {
-                    //Пропускает только точки больше или равные 7.
-                    if (listAllPointAmpl[i][j] >= strob)
-                    {
-                        num++;
-                    }
-                }
-
-                //Если таких массивов идёт подряд больше, чем 2, добавляет индекс массивов в лист indexOfArray.
-                if (num > numArraySequence)
-                {
-                    indexOfArray.Add(i);
-                }
-
-                num = 0;
-            }
-            FindSequence(indexOfArray, 4);
-        }*/
-
-
         //Выписывает из numbers  первый и последний индекс последовательности.
         //Эта последовательность должна состояить из 5 чисел, т.к. разница между первым и последним элементом равна аргументу sequenceLength.
-        public void FindSequence(List<double> numbers, int sequenceLength)
+        public void FindSequence(List<int> numbers, int sequenceLength)
         {
             string filePath = "Defects.txt";
+            List<int> angles = new List<int>();
+
+            for (int i = 0; i <= numbers.Count - sequenceLength; i++)
+            {
+                if (numbers[i + sequenceLength - 1] - numbers[i] == sequenceLength - 1)
+                {
+                    angles.Add(numbers[i]);
+                }
+            }
+
+            int n = 0;
 
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                for (int i = 0; i <= numbers.Count - sequenceLength; i++)
+                for (int i = 0; i <= angles.Count - 1; i++)
                 {
-                    if (numbers[i + sequenceLength - 1] - numbers[i] == sequenceLength - 1)
+
+                    if (i + 1 < angles.Count && angles[i + 1] - angles[i] == 1)
                     {
-                        writer.WriteLine($"Дефекты на углах {numbers[i] * 0.34058} - {numbers[i + sequenceLength -1 ] * 0.34058}, массивы с {numbers[i]} по {numbers[i + sequenceLength - 1]}");
-                        i += sequenceLength - 1;
+                        n++;
                     }
+                    else
+                    {
+                        writer.WriteLine($"Дефекты на углах {(angles[i] - n) * k} - {(angles[i] + sequenceLength - 1) * k}, массивы с {angles[i] - n} по {(angles[i] + sequenceLength - 1)}");
+                        n = 0;
+                    }
+
                 }
             }
         }

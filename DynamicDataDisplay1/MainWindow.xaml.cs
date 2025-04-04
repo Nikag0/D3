@@ -8,6 +8,11 @@ using DynamicDataDisplay;
 using Microsoft.Research.DynamicDataDisplay;
 using Microsoft.Research.DynamicDataDisplay.Charts;
 using Microsoft.Research.DynamicDataDisplay.DataSources;
+using OxyPlot;
+using OxyPlot.Series;
+using OxyPlot.Axes;
+using OxyPlot.Wpf;
+
 
 namespace DynamicDataDisplay1
 {
@@ -16,7 +21,7 @@ namespace DynamicDataDisplay1
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new ViewModelMainWindow(plotter);
+            DataContext = new ViewModelMainWindow();
         }
     }
 }
