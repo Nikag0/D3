@@ -7,67 +7,57 @@ using System.IO;
 using System.Windows.Media;
 using System.Windows;
 using System.Windows.Threading;
-using OxyPlot;
-using OxyPlot.Series;
-using OxyPlot.Axes;
-
 namespace DynamicDataDisplay1
 {
     public class ViewModelMainWindow
     {
+        private ChartPlotter plotter = new ChartPlotter();
         private GraphicService graphicService = new GraphicService();
         private int step = 0;
 
-        public PlotModel MyPlotModel { get; private set; }
-
-        public ViewModelMainWindow()
+        public ViewModelMainWindow(ChartPlotter plotter)
         {
-            MyPlotModel = new PlotModel { Title = "Пример графика с привязкой" };
-
-            LineSeries series = new LineSeries
-            { 
-                Title = "Данные",
-                MarkerType = MarkerType.Circle,
-                MarkerSize = 4,
-                MarkerStroke = OxyColors.White
-            };
-
-            // Добавляем точки данных
-            var dataPoints = new List<DataPoint>();
-            for (double x = 0; x < 10; x += 0.1)
-            {
-                dataPoints.Add(new DataPoint(x, Math.Sin(x)));
-            }
-            series.ItemsSource = dataPoints;
-
-            // Добавляем серию в модель
-            MyPlotModel.Series.Add(series);
-
+            this.plotter = plotter;
+            DrawCycleGraphic();
         }
 
-      
+        //Метод строит график на основе принимаемых аргументов.
+        private void PlotGraphic(IEnumerable<double> xValues, IEnumerable<double> yValues)
+        {
+            plotter.Viewport.Visible = new Rect(0, -40, 40, 80);
+            IPointDataSource compositeDataSource = xValues.AsXDataSource().Join(yValues.AsYDataSource());
+            plotter.AddLineGraph(compositeDataSource, Colors.Blue, 2);
+        }
+
+        //Метод уадяет график и строит новый каждый тик тиаймера.
         private void UpdateCyclyeGraphic()
         {
             DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
 
             timer.Tick += (sender, e) =>
-
             {
+                plotter.Children.Clear();
+                PlotGraphic(graphicService.MassAllPointTime, graphicService.ListAllPointAmpl[step]);
+                step++;
+
+                if (step > 1056)
+                {
+                    step = 0;
+                }
+
             };
 
             timer.Start();
         }
 
-        //Метод вызывает все методы, необходимые для построения цикличного графика.
-        private void DrawCycleGraphic()
+        public void DrawCycleGraphic()
         {
-            graphicService.AmplitudeData(pathFolder: "C:\\Users\\Пользователь\\Desktop\\Data2ForD3", nameFile: "_CH-2_OnWr-2.txt");
+            graphicService.AmplitudeData();
             graphicService.TimeData();
-            graphicService.FindSequence(graphicService.FindIndexOfArray(graphicService.ListAllPointAmpl, strob: 20, numArraySequence: 2), sequenceLength: 5);
-            //UpdateCyclyeGraphic();
+            UpdateCyclyeGraphic();
         }
 
-        private void DrawStaticGraphic()
+        public void DrawStaticGraphic()
         {
             string path = @"C:\Users\Пользователь\Desktop\DataForD3\0_CH-1_OnWr-2.txt";
             string[] dataString = File.ReadAllLines(path);
@@ -80,9 +70,11 @@ namespace DynamicDataDisplay1
                 xValues[i] = i / 100.0;
                 yValues[i] = double.Parse(dataString[i]);
             }
+
+            PlotGraphic(xValues, yValues);
         }
 
-        private void DrawSineGraphic()
+        public void DrawSineGraphic()
         {
             const int pointCount = 100;
             const double xMin = 0;
