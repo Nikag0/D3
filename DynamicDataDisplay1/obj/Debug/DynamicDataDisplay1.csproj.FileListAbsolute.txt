@@ -5,7 +5,13 @@ D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\DynamicDataDisplay.dll
 D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\DynamicDataDisplay.Maps.dll
 D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\DynamicDataDisplay.Markers.dll
 D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\DynamicDataDisplay.Markers2.dll
+D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\OxyPlot.dll
+D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\OxyPlot.Wpf.dll
+D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\OxyPlot.Wpf.Shared.dll
 D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\Parser.dll
+D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\OxyPlot.xml
+D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\OxyPlot.Wpf.xml
+D:\DynamicDataDisplay1\DynamicDataDisplay1\bin\Debug\OxyPlot.Wpf.Shared.xml
 D:\DynamicDataDisplay1\DynamicDataDisplay1\obj\Debug\DynamicDataDisplay1.csproj.AssemblyReference.cache
 D:\DynamicDataDisplay1\DynamicDataDisplay1\obj\Debug\MainWindow.g.cs
 D:\DynamicDataDisplay1\DynamicDataDisplay1\obj\Debug\App.g.cs

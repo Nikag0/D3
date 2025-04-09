@@ -7,57 +7,99 @@ using System.IO;
 using System.Windows.Media;
 using System.Windows;
 using System.Windows.Threading;
+using OxyPlot;
+using OxyPlot.Series;
+using OxyPlot.Axes;
+using OxyPlot.Wpf;
+using System.Timers;
+using System.ComponentModel;
+using System.Threading.Tasks;
+using Microsoft.Research.DynamicDataDisplay.Maps.DeepZoom;
+using System.Net.Http;
+
 namespace DynamicDataDisplay1
 {
     public class ViewModelMainWindow
     {
-        private ChartPlotter plotter = new ChartPlotter();
         private GraphicService graphicService = new GraphicService();
         private int step = 0;
+        private List<DataPoint> points = new List<DataPoint>();
+        
+        public PlotModel PlotModel { get; private set; }
+        private List<double[]> yValuesList;
+        private int currentYArrayIndex = 0;
+        private Timer timer;
+        private LineSeries lineSeries;
 
-        public ViewModelMainWindow(ChartPlotter plotter)
+        public ViewModelMainWindow()
         {
-            this.plotter = plotter;
-            DrawCycleGraphic();
-        }
+            graphicService.AmplitudeData(pathFolder: "C:\\Users\\Пользователь\\Desktop\\Data2ForD3", nameFile: "_CH-2_OnWr-2.txt");
+            graphicService.TimeData();
+            graphicService.FindSequence(graphicService.FindIndexOfArray(graphicService.ListAllPointAmpl, strob: 20, numArraySequence: 2), sequenceLength: 5);
+            // Инициализация модели графика
+            PlotModel = new PlotModel();
 
-        //Метод строит график на основе принимаемых аргументов.
-        private void PlotGraphic(IEnumerable<double> xValues, IEnumerable<double> yValues)
-        {
-            plotter.Viewport.Visible = new Rect(0, -40, 40, 80);
-            IPointDataSource compositeDataSource = xValues.AsXDataSource().Join(yValues.AsYDataSource());
-            plotter.AddLineGraph(compositeDataSource, Colors.Blue, 2);
-        }
-
-        //Метод уадяет график и строит новый каждый тик тиаймера.
-        private void UpdateCyclyeGraphic()
-        {
-            DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
-
-            timer.Tick += (sender, e) =>
+            // Создаем и добавляем серию данных
+            lineSeries = new LineSeries
             {
-                plotter.Children.Clear();
-                PlotGraphic(graphicService.MassAllPointTime, graphicService.ListAllPointAmpl[step]);
-                step++;
-
-                if (step > 1056)
-                {
-                    step = 0;
-                }
-
+                MarkerSize = 2,
+                MarkerStroke = OxyColors.Blue
             };
 
-            timer.Start();
+            PlotModel.Series.Add(lineSeries);
+
+            timer = new Timer(50);
+            timer.Elapsed += OnTimerElapsed;
+            timer.AutoReset = true;
+            timer.Enabled = true;
+
+            // Первоначальное обновление графика
+            UpdatePlot();
         }
 
-        public void DrawCycleGraphic()
+        private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
-            graphicService.AmplitudeData();
-            graphicService.TimeData();
-            UpdateCyclyeGraphic();
+
+            if (currentYArrayIndex >= graphicService.NumberOdFiles.Length)
+            {
+                currentYArrayIndex = 0;
+            }
+            else
+            {
+                currentYArrayIndex++;
+            }
+
+            UpdatePlot();
         }
 
-        public void DrawStaticGraphic()
+        private async Task UpdatePlot()
+        {
+            //await Task.Run(() =>
+            //{
+                lineSeries.Points.RemoveAll(p => true);
+
+                for (int i = 0; i <graphicService.MassAllPointTime.Length; i++) // Децимация для отображения
+                {
+                    points.Add(new DataPoint(i, graphicService.ListAllPointAmpl[currentYArrayIndex][i]));
+                }
+
+                lineSeries.Points.AddRange(points);
+                PlotModel.Title = $"{currentYArrayIndex}";
+                //Обновление графика.
+                PlotModel.InvalidatePlot(true);
+                points.Clear();
+            //});
+        }
+
+        private void DrawCycleGraphic()
+        {
+            graphicService.AmplitudeData(pathFolder: "C:\\Users\\Пользователь\\Desktop\\Data2ForD3", nameFile: "_CH-2_OnWr-2.txt");
+            graphicService.TimeData();
+            graphicService.FindSequence(graphicService.FindIndexOfArray(graphicService.ListAllPointAmpl, strob: 20, numArraySequence: 2), sequenceLength: 5);
+            //UpdateCyclyeGraphic();
+        }
+
+        private void DrawStaticGraphic()
         {
             string path = @"C:\Users\Пользователь\Desktop\DataForD3\0_CH-1_OnWr-2.txt";
             string[] dataString = File.ReadAllLines(path);
@@ -70,11 +112,9 @@ namespace DynamicDataDisplay1
                 xValues[i] = i / 100.0;
                 yValues[i] = double.Parse(dataString[i]);
             }
-
-            PlotGraphic(xValues, yValues);
         }
 
-        public void DrawSineGraphic()
+        private void DrawSineGraphic()
         {
             const int pointCount = 100;
             const double xMin = 0;
